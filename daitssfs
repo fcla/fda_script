@@ -1,0 +1,4 @@
+#!/bin/sh
+df /daitssfs/??? 2> /dev/null | sed s/Filesystem/Darchive/ | grep -v /dev
+echo ''
+ssh tarchive df /daitssfs/\?\?\? 2> /dev/null | sed s/Filesystem/Tarchive/ | grep -v /dev

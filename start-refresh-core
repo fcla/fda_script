@@ -1,0 +1,5 @@
+#!/bin/sh
+
+. /opt/fda/etc/refresh-core-defs.sh
+
+exec thin -C /opt/daitss2/services/refresh_core.yml -d start "$@" 2>&1 

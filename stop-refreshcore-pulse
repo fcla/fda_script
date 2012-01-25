@@ -1,0 +1,12 @@
+#!/bin/sh
+
+. /opt/fda/etc/refresh-core-defs.sh
+
+pid="`ps auxx | grep $BIN_DIR/pulse | grep -v grep | awk '{print $2}'`"
+
+if [ -z "$pid" ]; then
+  echo d1refresh testing version of pulse not running
+else
+  echo stopping the d1refresh testing version of pulse process $pid
+  kill $pid
+fi

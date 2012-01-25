@@ -1,0 +1,13 @@
+#!/bin/sh
+
+. /opt/fda/etc/refresh-core-defs.sh
+
+pid="`ps auxx | grep $BIN_DIR/pulse | grep -v grep | awk '{print $2}'`"
+
+if [ -n "$pid" ]; then
+  echo "can't start d1refresh-testing version of pulse - there is already one running (try stop-refresh-pulse first)"
+  exit 1
+fi
+
+echo "starting d1refresh-testing version of pulse"
+nohup bundle exec $BIN_DIR/pulse "$@" 2>&1 &

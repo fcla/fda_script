@@ -1,0 +1,137 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'digest/md5'
+require 'erb'
+
+# mets document template
+METS_TEMPLATE = ERB.new <<-ERB
+<mets xmlns="http://www.loc.gov/METS/"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:xlink="http://www.w3.org/1999/xlink"
+      xsi:schemaLocation="http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/mets.xsd
+                          http://www.fcla.edu/dls/md/daitss/ http://www.fcla.edu/dls/md/daitss/daitss.xsd
+                          http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-3.xsd"
+      OBJID="<%= options[:objid] %>">
+
+<% if options[:title] %>
+  <dmdSec ID="DMD1">
+    <mdWrap MDTYPE="MODS" OTHERMDTYPE="DATISS">
+      <xmlData>
+        <title xmlns="http://www.loc.gov/mods/v3">
+          <%= options[:title] %>
+        </title>
+      </xmlData>
+    </mdWrap>
+  </dmdSec>
+<% end %>
+
+  <amdSec>
+    <digiprovMD ID="DPMD1">
+      <mdWrap MDTYPE="OTHER" OTHERMDTYPE="DATISS">
+        <xmlData>
+          <daitss xmlns="http://www.fcla.edu/dls/md/daitss/">
+            <AGREEMENT_INFO ACCOUNT="<%= options[:account] %>" PROJECT="<%= options[:project] %>"/>
+          </daitss>
+        </xmlData>
+      </mdWrap>
+    </digiprovMD>
+  </amdSec>
+  <fileSec>
+    <fileGrp>
+    <% files.each_with_index do |file, i| %>
+      <file ID="F<%=i%>" CHECKSUM="<%= file[:md5] %>" CHECKSUMTYPE="MD5">
+      <FLocat LOCTYPE="URL" xlink:href="<%= file[:path] %>"/>
+      </file>
+    <% end %>
+    </fileGrp>
+  </fileSec>
+  <structMap>
+
+  <% if options[:issue] && options[:volume] %>
+    <div TYPE="volume" ORDERLABEL="<%= options[:volume] %>">
+      <div TYPE="issue" ORDERLABEL="<%= options[:issue] %>">
+  <% elsif options[:issue] || options[:volume]
+       type = options[:issue] ? 'issue' : 'volume'
+       order = options[:issue] || options[:volume]
+   %>
+    <div TYPE="<%= type %>" ORDERLABEL="<%= order %>">
+  <% else %>
+    <div>
+  <% end %>
+
+    <% files.each_with_index do |file, i| %>
+      <fptr FILEID="F<%=i%>"/>
+    <% end %>
+
+  <% if options[:issue] && options[:volume] %>
+      </div>
+    </div>
+  <% else %>
+    </div>
+  <% end %>
+
+  </structMap>
+</mets>
+ERB
+
+# option specification
+options = {}
+
+op = OptionParser.new do |opts|
+
+  opts.on("-a", "--account ACCOUNT", "DAITSS account code") do |account|
+    options[:account] = account
+  end
+
+  opts.on("-p", "--project PROJECT", "DAITSS project code") do |project|
+    options[:project] = project
+  end
+
+  opts.on("-o", "--object-id [ID]", "object id") do |objid|
+    options[:objid] = objid
+  end
+
+  opts.on("-i", "--issue [issue]", "issue") do |issue|
+    options[:issue] = issue
+  end
+
+  opts.on("-v", "--volume [VOLUME]", "VOLUME") do |volume|
+    options[:volume] = volume
+  end
+
+  opts.on("-t", "--title [TITLE]", "TITLE") do |title|
+    options[:title] = title
+  end
+
+end
+
+# option parsing & error checking
+begin
+  op.parse!
+  raise "account is required" unless options[:account]
+  raise "project is required" unless options[:project]
+  raise "no package specified" if ARGV.empty?
+  raise "only one package may be specified" if ARGV.size > 1
+  package_path = ARGV[0]
+  raise "#{package_path} is not a directory" unless File.directory? package_path
+  options[:objid] ||= package_path
+rescue => e
+  $stderr.puts e.message
+  $stderr.puts op.help
+  exit 1
+end
+
+# scan package
+files = Dir.chdir(package_path) do
+  paths = Dir['**/*'].select { |path| File.file? path }
+
+  files = paths.map do |path|
+    { :path => path,
+      :md5 => open(path) { |io| Digest::MD5.hexdigest(io.read) } }
+  end
+
+end
+
+# apply the template
+puts METS_TEMPLATE.result(binding)

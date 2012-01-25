@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ for i in $*; do j=`du -s $i | awk '{print $1}'`; k=`find $i -type f | wc -l`; l="`find $i -maxdepth 0 -ls | awk '{print $8, $9, $10}'`"; printf "%s %10d %4d\t%s\n" $i $j $k "$l"; done 

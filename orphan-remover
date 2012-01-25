@@ -1,0 +1,7 @@
+#!/bin/sh
+
+. /opt/fda/etc/storagemaster-defs.sh
+
+exec bundle exec $BIN_DIR/orphan-remover "$@" 2>&1 
+
+

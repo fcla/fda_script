@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# for every directory given on the command line give a summary of the files in it
+
+
+for dir in $*; do 
+   echo $dir
+   find $dir -type f -print0 | xargs -0 file | cut -d: -f2 | sed -e 's/^[ 	]*//'   | sort | uniq -c
+   echo ''
+done

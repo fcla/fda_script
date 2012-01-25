@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby 
+
+require 'optparse'
+require 'ostruct'
+
+def get_options args
+  conf = OpenStruct.new(:hostname => nil, :all_packages => false)
+
+  opts = OptionParser.new do |opts|
+
+    opts.banner = "Usage: #{$0.sub(%r{.*/}, '')} [ --options ] [ 001 002 .. ]\n"
+
+    opts.on("--hostname HOST",   String, "Required, the name of the host the silo is associated with (one of darchive or tarchive)") do |hostname|
+      case hostname
+      when /^darchive/i
+        conf.hostname = 'silos.darchive.fcla.edu'
+      when /^tarchive/i
+        conf.hostname = 'silos.tarchive.fcla.edu'
+      end
+    end
+    opts.on("--all-packages",  "If true, list out D2 packages as well as D1 (defaults to false)") do |all|
+      conf.all_packages = all
+    end
+  end
+  opts.parse!(args) 
+  raise "No valid hostname provided: --hostname be one of darchive or tarchive"  unless conf.hostname  
+rescue => e
+  STDERR.puts e, opts
+  exit 1
+else
+  return conf
+end
+
+
+
+conf  = get_options ARGV
+silos = ARGV
+
+silos.each do |silo|
+  if not silo =~ /^0\d\d$/
+    STDERR.puts "Invalid silo #{silo} specified: must be of form NNNN"
+    exit 1
+  end
+end
+
+silos.each do |silo|
+  open ("| curl -s http://#{conf.hostname}:70/#{silo}/fixity/") do |fh|
+    while not fh.eof?
+      line = fh.gets
+      next unless line =~ /<fixity.*name="/
+      package = line.sub(/^.*name="/, '').sub(/".*/, '')
+
+      if conf.all_packages
+        puts package
+      else
+        puts package unless package =~ /\.\d\d\d$/
+      end
+    end
+  end
+end

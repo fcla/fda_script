@@ -1,0 +1,3 @@
+DataObjects::URI.new with arguments is deprecated, use a Hash of URI components (/opt/daitss2/services/refresh_core/bundle/ruby/1.8/gems/dm-do-adapter-1.1.0/lib/dm-do-adapter/adapter.rb:231:in `new')
+DataObjects::URI.new with arguments is deprecated, use a Hash of URI components (/opt/daitss2/services/refresh_core/bundle/ruby/1.8/gems/dm-do-adapter-1.1.0/lib/dm-do-adapter/adapter.rb:231:in `new')
+DataObjects::URI.new with arguments is deprecated, use a Hash of URI components (/opt/daitss2/services/refresh_core/bundle/ruby/1.8/gems/dm-do-adapter-1.1.0/lib/dm-do-adapter/adapter.rb:231:in `new')
